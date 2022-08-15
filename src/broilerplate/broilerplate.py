@@ -1,32 +1,71 @@
 from __future__ import annotations
 
 import pathlib
-from dataclasses import dataclass
-from dataclasses import field
 from typing import Optional
 
 import tomli
 
 
-@dataclass
+class InvalidConfigException(Exception):
+    pass
+
+
+class Cmd:
+
+    def __init__(self, cmd) -> None:
+        self.cmd = cmd
+
+    def __call__(self) -> None:
+        exec(self.cmd)
+
+
 class Broilerplate:
-    config: dict
-    config_file: Optional[pathlib.Path] = field(default=None)
-    config_string: Optional[str] = field(default=None)
+
+    def __init__(
+        self,
+        config: dict,
+        config_file: Optional[pathlib.Path] = None,
+        config_string: Optional[str] = None,
+    ) -> None:
+        self.config = config
+        self.config_file = config_file
+        self.config_string = config_string
+        self.__post_init__()
+
+    def __post_init__(self) -> None:
+        for k, v in self.config.items():
+            if isinstance(v, str):
+                self.name = v
+            elif isinstance(v, dict):
+                setattr(self, k, Cmd(v['cmd']))
+            else:
+                raise InvalidConfigException
+
+    def __repr__(self) -> str:
+        return f'Broilerplate({self.config})'
+
+    def __str__(self) -> str:
+        # TODO implement
+        return self.__repr__()
 
     @classmethod
-    def _from_file(cls, broil_file):
-        return cls(Broilerplate._parse_config(pathlib.Path(broil_file)), config_file=broil_file)
+    def _from_file(cls, config_file: str):
+        config_path = pathlib.Path(config_file)
+        return cls(Broilerplate._parse_config(config_path), config_path)
 
     @classmethod
-    def _from_string(cls, broil_string):
-        return cls(tomli.loads(broil_string), config_string=broil_string)
+    def _from_string(cls, config_string: str):
+        return cls(tomli.loads(config_string), config_string=config_string)
 
     @staticmethod
-    def _parse_config(broil_pan):
-        """Parse broil pan configuration
+    def _parse_config(config_file: pathlib.Path):
+        """Parse config file
         """
-        with open(broil_pan.absolute(), 'rb') as f:
-            pan = tomli.load(f)
+        with open(config_file.absolute(), 'rb') as f:
+            config = tomli.load(f)
 
-        return pan
+        return config
+
+    def run(self, config_name: str):
+        run_config = self.config[config_name]
+        exec(run_config)
