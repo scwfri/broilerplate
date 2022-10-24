@@ -11,7 +11,6 @@ class InvalidConfigException(Exception):
 
 
 class Cmd:
-
     def __init__(self, cmd) -> None:
         self.cmd = cmd
 
@@ -20,7 +19,6 @@ class Cmd:
 
 
 class Broilerplate:
-
     def __init__(
         self,
         config: dict,
@@ -37,16 +35,15 @@ class Broilerplate:
             if isinstance(v, str):
                 self.name = v
             elif isinstance(v, dict):
-                setattr(self, k, Cmd(v['cmd']))
+                setattr(self, k, Cmd(v["cmd"]))
             else:
                 raise InvalidConfigException
 
     def __repr__(self) -> str:
-        return f'Broilerplate({self.config})'
+        return f"Broilerplate({self.config})"
 
     def __str__(self) -> str:
-        # TODO implement
-        return self.__repr__()
+        return f"Config: {self.config}."
 
     @classmethod
     def _from_file(cls, config_file: str):
@@ -59,9 +56,8 @@ class Broilerplate:
 
     @staticmethod
     def _parse_config(config_file: pathlib.Path):
-        """Parse config file
-        """
-        with open(config_file.absolute(), 'rb') as f:
+        """Parse config file"""
+        with open(config_file.absolute(), "rb") as f:
             config = tomli.load(f)
 
         return config
